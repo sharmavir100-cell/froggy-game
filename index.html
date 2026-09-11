@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>🐸 Froggy Game</title>
+
+<style>
+body {
+    margin: 0;
+    text-align: center;
+    font-family: Arial, sans-serif;
+    background: #bdefff;
+}
+
+h1 {
+    margin: 12px;
+}
+
+#game {
+    width: 600px;
+    height: 330px;
+    margin: auto;
+    position: relative;
+    overflow: hidden;
+    border: 4px solid #222;
+    border-radius: 18px;
+    background: linear-gradient(#7bd36b 0 28%, #42b9e8 28% 100%);
+}
+
+#frog {
+    position: absolute;
+    left: 80px;
+    bottom: 38px;
+    font-size: 52px;
+    z-index: 3;
+}
+
+#rock {
+    position: absolute;
+    left: 600px;
+    bottom: 38px;
+    font-size: 48px;
+    z-index: 3;
+}
+
+.lily {
+    position: absolute;
+    font-size: 34px;
+}
+
+#l1 {
+    left: 220px;
+    top: 90px;
+}
+
+#l2 {
+    left: 430px;
+    top: 170px;
+}
+
+#l3 {
+    left: 310px;
+    top: 230px;
+}
+
+button {
+    font-size: 22px;
+    padding: 10px 28px;
+    border-radius: 12px;
+    border: 2px solid #222;
+    background: white;
+}
+
+</style>
+</head>
+
+<body>
+
+<h1>🐸 Froggy Game</h1>
+
+<div id="game">
+
+<div id="l1" class="lily">🌸</div>
+<div id="l2" class="lily">🌿</div>
+<div id="l3" class="lily">🌸</div>
+
+<div id="frog">🐸</div>
+<div id="rock">🪨</div>
+
+</div>
+
+<button onclick="jump()">JUMP</button>
+
+<script>
+
+let rockX = 600;
+let jumping = false;
+let last = 0;
+
+const speed = 80;
+
+function move(time) {
+
+    if (!last) {
+        last = time;
+    }
+
+    let change = (time - last) / 1000;
+    last = time;
+
+    rockX -= speed * change;
+
+    if (rockX < -60) {
+        rockX = 600;
+    }
+
+    document.getElementById("rock").style.left =
+        rockX + "px";
+
+    checkHit();
+
+    requestAnimationFrame(move);
+}
+
+function jump() {
+
+    if (jumping) {
+        return;
+    }
+
+    jumping = true;
+
+    let frog = document.getElementById("frog");
+
+    frog.style.bottom = "160px";
+
+    setTimeout(function() {
+
+        frog.style.bottom = "38px";
+        jumping = false;
+
+    }, 550);
+}
+
+function checkHit() {
+
+    let frog = document.getElementById("frog");
+    let rock = document.getElementById("rock");
+
+    let a = frog.getBoundingClientRect();
+    let b = rock.getBoundingClientRect();
+if (
+    a.right > b.left &&
+    a.left < b.right &&
+    a.bottom > b.top &&
+    a.top < b.bottom
+) {
+
+    alert("Oops! You hit the rock!");
+
+    rockX = 600;
+
+} else if (rockX < 20 && !jumping) {
+
+    alert("You did not hit the rock!");
+
+    rockX = 600;
+}
+  
+
+  
+
+
+
+    
+
+requestAnimationFrame(move);
+
+</script>
+
+</body>
+</html>
