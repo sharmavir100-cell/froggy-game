@@ -148,30 +148,24 @@ function checkHit() {
 
     let a = frog.getBoundingClientRect();
     let b = rock.getBoundingClientRect();
-if (
-    a.right > b.left &&
-    a.left < b.right &&
-    a.bottom > b.top &&
-    a.top < b.bottom
-) {
+    if (
+        a.right > b.left &&
+        a.left < b.right &&
+        a.bottom > b.top &&
+        a.top < b.bottom
+    ) {
 
-    alert("Oops! You hit the rock!");
+        alert("Oops! You hit the rock!");
 
-    rockX = 600;
+        rockX = 600;
 
-} else if (rockX < 20 && !jumping) {
+    } else if (rockX < 20 && !jumping) {
 
-    alert("You did not hit the rock!");
+        alert("You did not hit the rock!");
 
-    rockX = 600;
+        rockX = 600;
+    }
 }
-  
-
-  
-
-
-
-    
 
 requestAnimationFrame(move);
 
