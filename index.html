@@ -1,175 +1,191 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>🐸 Froggy Game</title>
-
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#35bde8">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Froggy Game">
+<title>🐸 Froggy Game - Jump Into the Fun!</title>
 <style>
-body {
-    margin: 0;
-    text-align: center;
-    font-family: Arial, sans-serif;
-    background: #bdefff;
-}
-
-h1 {
-    margin: 12px;
-}
-
-#game {
-    width: 600px;
-    height: 330px;
-    margin: auto;
-    position: relative;
-    overflow: hidden;
-    border: 4px solid #222;
-    border-radius: 18px;
-    background: linear-gradient(#7bd36b 0 28%, #42b9e8 28% 100%);
-}
-
-#frog {
-    position: absolute;
-    left: 80px;
-    bottom: 38px;
-    font-size: 52px;
-    z-index: 3;
-}
-
-#rock {
-    position: absolute;
-    left: 600px;
-    bottom: 38px;
-    font-size: 48px;
-    z-index: 3;
-}
-
-.lily {
-    position: absolute;
-    font-size: 34px;
-}
-
-#l1 {
-    left: 220px;
-    top: 90px;
-}
-
-#l2 {
-    left: 430px;
-    top: 170px;
-}
-
-#l3 {
-    left: 310px;
-    top: 230px;
-}
-
-button {
-    font-size: 22px;
-    padding: 10px 28px;
-    border-radius: 12px;
-    border: 2px solid #222;
-    background: white;
-}
-
+:root{--ink:#17202a;--panel:#ffffffdd;--ground:42px}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;min-height:100vh;overflow-x:hidden;text-align:center;font-family:Arial,sans-serif;color:var(--ink);background:radial-gradient(circle at 15% 15%,#fff8a8 0 5%,transparent 6%),linear-gradient(#8edcff,#d9f8ff 48%,#b9f29b);transition:background 1s,color .3s}
+body.night{color:#fff;background:radial-gradient(circle at 80% 15%,#fff 0 1%,transparent 2%),radial-gradient(circle at 20% 25%,#fff 0 1%,transparent 2%),linear-gradient(#111b4d,#263b83 55%,#174d62)}
+button,input{font:inherit}
+button{font-size:18px;padding:10px 18px;margin:4px;border-radius:12px;border:2px solid var(--ink);background:#fff;color:var(--ink);cursor:pointer;font-weight:bold;box-shadow:0 4px 0 #0003;transition:transform .12s,background .12s,opacity .12s}
+button:hover{background:#fff3a8;transform:translateY(-2px) rotate(-1deg)}
+button:active{transform:translateY(2px);box-shadow:0 1px 0 #0003}
+button:disabled{cursor:not-allowed;opacity:.55;transform:none}
+button:focus-visible,input:focus-visible{outline:4px solid #7df9ff;outline-offset:2px}
+h1{margin:14px 8px 4px;font-size:clamp(26px,5vw,42px);text-shadow:3px 3px 0 #fff8}
+.subtitle{max-width:760px;margin:0 auto 10px;padding:0 8px;font-weight:bold}
+#playButton{font-size:26px;padding:14px 42px;margin:8px auto 14px;border-radius:16px;border:3px solid var(--ink);background:#fff36b;font-weight:bold;box-shadow:0 6px 0 #0004;animation:bounce 1.4s ease-in-out infinite}
+@keyframes bounce{50%{transform:translateY(-5px) rotate(-1deg)}}
+#menu,#chat{width:min(96vw,820px);margin:0 auto 10px;padding:12px;background:var(--panel);border:2px solid var(--ink);border-radius:18px;box-shadow:0 8px 20px #0002}
+input{font-size:18px;padding:10px;width:min(230px,70vw);border:2px solid var(--ink);border-radius:10px;color:var(--ink);background:#fff}
+#status{font-size:15px;font-weight:bold;margin:8px 0 0}
+#scoreboard{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin:8px auto;width:min(96vw,820px)}
+.stat{min-width:105px;padding:8px 12px;background:var(--panel);border:2px solid var(--ink);border-radius:14px;font-weight:bold}
+#game{width:min(96vw,820px);height:430px;margin:auto;position:relative;overflow:hidden;border:4px solid var(--ink);border-radius:22px;background:linear-gradient(#72d86b 0 25%,#42b9e8 25%);box-shadow:0 12px 28px #0004;touch-action:manipulation;user-select:none}
+#game:after{content:"";position:absolute;left:0;right:0;bottom:0;height:var(--ground);background:repeating-linear-gradient(90deg,#238fbd 0 35px,#2aa8c9 36px 70px);opacity:.55;pointer-events:none}
+.cloud,.lily,.player,.collectible,#rock{position:absolute;pointer-events:none}
+.cloud{font-size:48px;z-index:1;animation:float 12s linear infinite;opacity:.85}
+#cloud1{left:5%;top:35px}#cloud2{left:58%;top:70px;animation-delay:-6s}
+@keyframes float{0%,100%{transform:translateX(-30px)}50%{transform:translateX(35px)}}
+.lily{font-size:38px;z-index:2;filter:drop-shadow(0 4px 2px #0003);animation:bob 2s ease-in-out infinite}
+#l1{left:22%;top:105px}#l2{left:62%;top:185px;animation-delay:.5s}#l3{left:42%;top:285px;animation-delay:1s}
+@keyframes bob{50%{transform:translateY(-7px) rotate(4deg)}}
+.player{left:90px;bottom:var(--ground);width:48px;height:72px;border-radius:50% 50% 45% 45%;z-index:8;transition:bottom .16s;filter:drop-shadow(0 6px 2px #0004)}
+.player:before,.player:after{content:"";position:absolute;top:-20px;width:21px;height:27px;border-radius:50%;background:inherit;border:3px solid var(--ink)}
+.player:before{left:1px}.player:after{right:1px}
+.player span:before,.player span:after{content:"";position:absolute;top:-11px;width:8px;height:8px;border-radius:50%;background:var(--ink);z-index:2}
+.player span:before{left:12px}.player span:after{right:12px}
+#myPlayer{background:#ff8b35;animation:happy 1.2s ease-in-out infinite}
+@keyframes happy{50%{transform:rotate(2deg) scale(1.03)}}
+#otherPlayer{left:170px;background:#4b7bec;display:none;opacity:.9}
+#myPlayer.shield{outline:5px solid #7df9ff;box-shadow:0 0 22px #7df9ff}
+#myPlayer.magnet{outline:5px solid #ff6fae;box-shadow:0 0 22px #ff6fae}
+#rock{left:850px;bottom:var(--ground);font-size:52px;z-index:7;filter:drop-shadow(0 5px 2px #0004)}
+.collectible{left:850px;z-index:6;font-size:34px;display:none;filter:drop-shadow(0 4px 3px #0005);animation:spin 1s linear infinite}
+@keyframes spin{50%{transform:rotate(15deg) scale(1.15)}}
+#powerup{font-size:38px}
+#message{font-size:20px;font-weight:bold;min-height:26px;margin:8px}
+#restart,#pauseButton{display:none}
+#controls{width:min(96vw,820px);margin:4px auto}
+#combo{color:#d94b00;font-size:18px;font-weight:bold}
+#flash{position:fixed;inset:0;pointer-events:none;background:#fff;opacity:0;z-index:20}
+#flash.active{animation:flash .35s}
+@keyframes flash{0%{opacity:.8}100%{opacity:0}}
+#toast{position:fixed;left:50%;top:18%;transform:translateX(-50%) scale(.7);padding:14px 22px;border-radius:18px;background:#17202aee;color:#fff;font-size:24px;font-weight:bold;opacity:0;pointer-events:none;z-index:30}
+#toast.show{animation:toast 1.2s ease}
+@keyframes toast{0%{opacity:0;transform:translateX(-50%) scale(.7)}20%,75%{opacity:1;transform:translateX(-50%) scale(1)}100%{opacity:0;transform:translateX(-50%) scale(1.05)}}
+#chat{margin:14px auto 24px;text-align:left}
+#chat h2{margin:0 0 10px;text-align:center}
+#chatMessages{height:180px;overflow-y:auto;padding:10px;background:#ffffffaa;border:2px solid var(--ink);border-radius:12px}
+.chatMessage{margin:6px 0;padding:7px 9px;border-radius:10px;background:#e8f8ff;overflow-wrap:anywhere}
+.chatMessage strong{color:#145b78}
+#chatForm{display:flex;gap:8px;margin-top:10px}
+#chatName{width:130px}#chatInput{flex:1;width:auto}#chatForm button{margin:0}
+@media(max-width:560px){#game{height:350px}.player{transform:scale(.88);transform-origin:bottom left}#rock{font-size:44px}.collectible{font-size:29px}.lily{font-size:31px}#chatForm{flex-wrap:wrap}#chatName,#chatInput,#chatForm button{width:100%}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}}
 </style>
 </head>
-
 <body>
-
-<h1>🐸 Froggy Game</h1>
-
-<div id="game">
-
-<div id="l1" class="lily">🌸</div>
-<div id="l2" class="lily">🌿</div>
-<div id="l3" class="lily">🌸</div>
-
-<div id="frog">🐸</div>
-<div id="rock">🪨</div>
-
+<header>
+<h1>🐸 Froggy Game: Jump Into the Fun!</h1>
+<p class="subtitle">Hop, dodge, collect treasure, build ridiculous combos, and become the pond's most legendary frog!</p>
+<button id="playButton" type="button">▶️ START THE FROG-TASTIC FUN!</button>
+</header>
+<main>
+<section id="menu" aria-label="Game menu">
+<input id="roomCode" maxlength="24" placeholder="Enter room code" autocomplete="off" aria-label="Room code">
+<button id="joinButton" type="button">🐸 Join Frog Squad</button>
+<button id="soundButton" type="button">🔊 Sound On</button>
+<button id="pauseButton" type="button">⏸ Pause</button>
+<p id="status" role="status">Press START to begin, or enter a room code and invite your favorite frogs!</p>
+</section>
+<section id="scoreboard" aria-label="Game statistics">
+<div class="stat">⭐ Score: <b id="score">0</b></div>
+<div class="stat">🏆 Best: <b id="best">0</b></div>
+<div class="stat">❤️ Lives: <b id="lives">3</b></div>
+<div class="stat">🔥 Combo: <b id="combo">x0</b></div>
+<div class="stat">🌊 Level: <b id="level">1</b></div>
+</section>
+<div id="game" aria-label="Froggy game area" role="application">
+<div id="cloud1" class="cloud" aria-hidden="true">☁️</div>
+<div id="cloud2" class="cloud" aria-hidden="true">☁️</div>
+<div id="l1" class="lily" aria-hidden="true">🌸</div>
+<div id="l2" class="lily" aria-hidden="true">🌿</div>
+<div id="l3" class="lily" aria-hidden="true">🌸</div>
+<div id="coin" class="collectible" aria-label="Coin">🪙</div>
+<div id="gem" class="collectible" aria-label="Gem">💎</div>
+<div id="powerup" class="collectible" aria-label="Shield power-up">🛡️</div>
+<div id="myPlayer" class="player" aria-label="Your frog"><span></span></div>
+<div id="otherPlayer" class="player" aria-label="Friend's frog"><span></span></div>
+<div id="rock" aria-label="Rock">🪨</div>
 </div>
-
-<button onclick="jump()">JUMP</button>
-
+<div id="controls">
+<button id="jumpButton" type="button">🐸 HOP!</button>
+<button id="restart" type="button">🔄 PLAY AGAIN</button>
+</div>
+<p id="message" role="status" aria-live="polite">Press START, Space, tap HOP, or tap the pond to begin your frog-tastic adventure!</p>
+<section id="chat" aria-label="Froggy game chat">
+<h2>💬 Pond Party Chat</h2>
+<div id="chatMessages" aria-live="polite"><div class="chatMessage"><strong>Froggy Bot:</strong> Welcome to the pond party! Tell everyone your best frog joke.</div></div>
+<form id="chatForm">
+<input id="chatName" maxlength="20" placeholder="Your frog name" autocomplete="nickname" aria-label="Your name">
+<input id="chatInput" maxlength="180" placeholder="Type something ribbit-worthy..." autocomplete="off" aria-label="Chat message">
+<button type="submit">Send 🐸</button>
+</form>
+</section>
+</main>
+<div id="flash" aria-hidden="true"></div>
+<div id="toast" role="status" aria-live="polite"></div>
+<div id="ownerCounter" style="position:fixed;left:12px;bottom:12px;display:none;z-index:9999;background:#fff;border:2px solid #222;border-radius:999px;padding:6px 10px;font:700 14px/1 Arial,sans-serif;box-shadow:0 4px 8px rgba(0,0,0,.15);">👥 0</div>
 <script>
+"use strict";
+const $=id=>document.getElementById(id);
+const e={game:$("game"),play:$("playButton"),join:$("joinButton"),sound:$("soundButton"),pause:$("pauseButton"),restart:$("restart"),jump:$("jumpButton"),room:$("roomCode"),status:$("status"),message:$("message"),score:$("score"),best:$("best"),lives:$("lives"),combo:$("combo"),level:$("level"),me:$("myPlayer"),other:$("otherPlayer"),rock:$("rock"),coin:$("coin"),gem:$("gem"),power:$("powerup"),flash:$("flash"),toast:$("toast"),messages:$("chatMessages"),form:$("chatForm"),name:$("chatName"),input:$("chatInput")};
+const items=[e.coin,e.gem,e.power],KEY="froggyDreamBest";
+const s={room:"",id:crypto.randomUUID?.()||Math.random().toString(36).slice(2),channel:null,jumping:false,otherJumping:false,rockX:850,collectibleX:850,last:0,score:0,lives:3,combo:0,started:false,over:false,paused:false,speed:210,level:1,spawn:2,active:null,shield:false,magnet:false,shieldTimer:0,magnetTimer:0,sound:true,best:Number(localStorage.getItem(KEY)||0),audio:null};
+e.best.textContent=s.best;
+const status=t=>e.status.textContent=t,message=t=>e.message.textContent=t;
+function hud(){e.score.textContent=s.score;e.lives.textContent=s.lives;e.combo.textContent=`x${s.combo}`;e.level.textContent=s.level;e.best.textContent=s.best}
+function beep(f=440,d=.08,type="sine"){if(!s.sound)return;try{const A=AudioContext||webkitAudioContext;s.audio??=new A;s.audio.resume?.();const o=s.audio.createOscillator(),g=s.audio.createGain(),n=s.audio.currentTime;o.type=type;o.frequency.value=f;g.gain.setValueAtTime(.04,n);g.gain.exponentialRampToValueAtTime(.001,n+d);o.connect(g);g.connect(s.audio.destination);o.start(n);o.stop(n+d)}catch{}}
+function toast(t){e.toast.textContent=t;e.toast.classList.remove("show");void e.toast.offsetWidth;e.toast.classList.add("show")}
+function flash(){e.flash.classList.remove("active");void e.flash.offsetWidth;e.flash.classList.add("active")}
+function chat(name,text){const d=document.createElement("div"),b=document.createElement("strong");d.className="chatMessage";b.textContent=name+":";d.append(b,document.createTextNode(" "+text));e.messages.append(d);while(e.messages.children.length>80)e.messages.firstChild.remove();e.messages.scrollTop=e.messages.scrollHeight}
+function send(data){s.channel?.postMessage({...data,id:s.id})}
+function sendChat(){const n=e.name.value.trim().slice(0,20)||"Anonymous Frog",t=e.input.value.trim().slice(0,180);if(!t)return;chat(n,t);send({type:"chat",name:n,text:t});e.input.value="";e.input.focus();beep(760)}
+function receive(x){const d=x.data;if(!d||d.id===s.id)return;if(d.type==="position")e.other.style.left=(Number(d.position)||90)+"px";if(d.type==="jump")otherJump();if(d.type==="chat")chat(d.name||"Anonymous Frog",d.text||"");if(d.type==="hello")send({type:"position",position:parseFloat(e.me.style.left)||90})}
+function join(){const r=e.room.value.trim().replace(/\s+/g,"-").toLowerCase();if(!r){status("Please enter a room code first, superstar frog.");e.room.focus();return}s.room=r;s.channel?.close();if("BroadcastChannel"in window){s.channel=new BroadcastChannel("froggy-dream-room-"+r);s.channel.onmessage=receive;send({type:"hello"});status(`Joined room: ${r} | Your frog squad is ready to hop!`)}else status("Multiplayer is unavailable here, but solo frog chaos is ready!");e.other.style.display="block";start();chat("Froggy Bot",`You joined room ${r}. Let the hopping begin!`);beep(660,.12)}
+function start(){if(s.started)return;s.started=true;e.play.style.display="none";e.pause.style.display="inline-block";message("Ribbit! The adventure begins. Dodge rocks, grab treasure, and chase the high score!");status(s.room?`Playing with the frog squad in room: ${s.room}`:"Solo frog adventure in progress!");toast("🐸 LET'S HOP!");beep(520,.15)}
+function jump(){if(!s.started)start();if(s.jumping||s.over||s.paused)return;s.jumping=true;e.me.style.bottom="190px";send({type:"jump"});beep(520,.1,"triangle");setTimeout(()=>{e.me.style.bottom="42px";s.jumping=false},560)}
+function otherJump(){if(s.otherJumping)return;s.otherJumping=true;e.other.style.bottom="190px";setTimeout(()=>{e.other.style.bottom="42px";s.otherJumping=false},560)}
+function add(n){s.score+=n;if(s.score>s.best){s.best=s.score;localStorage.setItem(KEY,s.best)}const l=Math.floor(s.score/25)+1;if(l>s.level){s.level=l;s.speed=Math.min(430,s.speed+18);toast(`🌟 LEVEL ${l}! FASTER FROG!`);beep(880,.18,"square")}hud()}
+function resetCombo(){s.combo=0;hud()}
+function collect(n){s.combo++;add(n*Math.min(5,1+Math.floor(s.combo/5)));if(s.combo>=5)toast(`🔥 ${s.combo} HOP COMBO!`);beep(700+s.combo*25)}
+function hide(){if(s.active)s.active.style.display="none";s.active=null}
+function spawn(){if(s.active)return;const r=Math.random();s.active=r<.58?e.coin:r<.86?e.gem:e.power;s.collectibleX=e.game.clientWidth+50;s.active.style.left=s.collectibleX+"px";s.active.style.top=90+Math.random()*190+"px";s.active.style.display="block"}
+function power(){if(s.active===e.power){s.shield=true;s.shieldTimer=8;e.me.classList.add("shield");toast("🛡️ INVINCIBLE FROG!")}else if(s.active===e.gem){s.magnet=true;s.magnetTimer=7;e.me.classList.add("magnet");toast("💖 TREASURE MAGNET!")}else toast("🪙 COIN CHA-CHING!");beep(980,.2)}
+function overlap(a,b){return a.right>b.left&&a.left<b.right&&a.bottom>b.top&&a.top<b.bottom}
+function resetRock(){s.rockX=e.game.clientWidth+100}
+function lose(){if(s.shield){s.shield=false;e.me.classList.remove("shield");toast("🛡️ SHIELD SAVED YOUR BACON!");flash();resetRock();message("That rock got bonked by your shield!");return}s.lives--;resetCombo();resetRock();message("Bonk! The rock got you. No worries—shake it off and hop again!");flash();beep(120,.25,"sawtooth");if(s.lives<=0){s.over=true;message(`🌙 GAME OVER! Final score: ${s.score}. Press PLAY AGAIN to unleash your frog powers!`);e.restart.style.display="inline-block";e.pause.style.display="none";toast("🐸 FROG DOWN!")}hud()}
+function collisions(){if(overlap(e.me.getBoundingClientRect(),e.rock.getBoundingClientRect())){lose();return}if(!s.active)return;const a=e.me.getBoundingClientRect(),b=s.active.getBoundingClientRect();if(overlap(a,b)||(s.magnet&&Math.abs(a.left-b.left)<150)){collect(s.active===e.coin?5:s.active===e.gem?15:0);power();hide();s.spawn=1.5+Math.random()*2}}
+function timers(d){if(s.shield&&!(s.shieldTimer-=d)){s.shield=false;e.me.classList.remove("shield")}if(s.magnet&&!(s.magnetTimer-=d)){s.magnet=false;e.me.classList.remove("magnet")}}
+function loop(t){if(!s.last)s.last=t;const d=Math.min((t-s.last)/1000,.05);s.last=t;if(s.started&&!s.over&&!s.paused){s.rockX-=s.speed*d;if(s.rockX<-90){resetRock();add(2);s.combo++;hud();message("Nailed it! That rock never stood a chance!");beep(620,.07)}e.rock.style.left=s.rockX+"px";if((s.spawn-=d)<=0){spawn();s.spawn=2.5+Math.random()*3}if(s.active){s.collectibleX-=s.speed*.82*d;s.active.style.left=s.collectibleX+"px";if(s.collectibleX<-80)hide()}timers(d);collisions();document.body.classList.toggle("night",Math.floor(s.score/40)%2===1)}requestAnimationFrame(loop)}
+function restart(){Object.assign(s,{score:0,lives:3,combo:0,level:1,speed:210,rockX:e.game.clientWidth+50,over:false,paused:false,jumping:false,started:true,shield:false,magnet:false,shieldTimer:0,magnetTimer:0,spawn:1.5});e.play.style.display="none";e.restart.style.display="none";e.pause.style.display="inline-block";e.pause.textContent="⏸ Pause";e.me.style.bottom="42px";e.me.classList.remove("shield","magnet");hide();hud();message("Fresh frog, fresh start! Show those rocks who's boss!");toast("🐸 ROUND TWO!");beep(520,.15)}
+function pause(){if(!s.started||s.over)return;s.paused=!s.paused;e.pause.textContent=s.paused?"▶ Resume":"⏸ Pause";message(s.paused?"Frog break! Stretch those webbed toes.":"Back to the pond—let's hop!")}
+e.play.onclick=start;e.join.onclick=join;e.jump.onclick=jump;e.restart.onclick=restart;e.pause.onclick=pause;e.sound.onclick=()=>{s.sound=!s.sound;e.sound.textContent=s.sound?"🔊 Sound On":"🔇 Sound Off";if(s.sound)beep(700)};
+e.form.onsubmit=x=>{x.preventDefault();sendChat()};e.room.onkeydown=x=>{if(x.key==="Enter"){x.preventDefault();join()}};
+document.onkeydown=x=>{if(x.code==="Space"||x.code==="ArrowUp"){x.preventDefault();jump()}if(x.code==="KeyP")pause()};
+e.game.onpointerdown=x=>{if(x.target===e.game||x.target.classList.contains("lily")||x.target.classList.contains("cloud"))jump()};
+addEventListener("resize",()=>{if(s.rockX>e.game.clientWidth)s.rockX=e.game.clientWidth+50});
+addEventListener("pagehide",()=>s.channel?.close());
 
-let rockX = 600;
-let jumping = false;
-let last = 0;
+const ownerMode = new URLSearchParams(window.location.search).get('owner') === '1';
+const ownerCounter = document.getElementById('ownerCounter');
 
-const speed = 80;
+async function updateOwnerCounter() {
+  if (!ownerMode) return;
 
-function move(time) {
-
-    if (!last) {
-        last = time;
-    }
-
-    let change = (time - last) / 1000;
-    last = time;
-
-    rockX -= speed * change;
-
-    if (rockX < -60) {
-        rockX = 600;
-    }
-
-    document.getElementById("rock").style.left =
-        rockX + "px";
-
-    checkHit();
-
-    requestAnimationFrame(move);
+  try {
+    const response = await fetch('https://api.countapi.xyz/hit/froggy-game/visits');
+    const data = await response.json();
+    ownerCounter.style.display = 'block';
+    ownerCounter.textContent = `👥 ${data.value}`;
+  } catch (error) {
+    ownerCounter.style.display = 'block';
+    ownerCounter.textContent = '👥 0';
+  }
 }
 
-function jump() {
+updateOwnerCounter();
 
-    if (jumping) {
-        return;
-    }
-
-    jumping = true;
-
-    let frog = document.getElementById("frog");
-
-    frog.style.bottom = "160px";
-
-    setTimeout(function() {
-
-        frog.style.bottom = "38px";
-        jumping = false;
-
-    }, 550);
-}
-
-function checkHit() {
-
-    let frog = document.getElementById("frog");
-    let rock = document.getElementById("rock");
-
-    let a = frog.getBoundingClientRect();
-    let b = rock.getBoundingClientRect();
-    if (
-        a.right > b.left &&
-        a.left < b.right &&
-        a.bottom > b.top &&
-        a.top < b.bottom
-    ) {
-
-        alert("Oops! You hit the rock!");
-
-        rockX = 600;
-
-    } else if (rockX < 20 && !jumping) {
-
-        alert("You did not hit the rock!");
-
-        rockX = 600;
-    }
-}
-
-requestAnimationFrame(move);
-
+hud();requestAnimationFrame(loop);
 </script>
-
 </body>
 </html>
