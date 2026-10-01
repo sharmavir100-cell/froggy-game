@@ -124,15 +124,30 @@ input{font-size:18px;padding:10px;width:min(230px,70vw);border:2px solid var(--i
 </main>
 <div id="flash" aria-hidden="true"></div>
 <div id="toast" role="status" aria-live="polite"></div>
-<div id="ownerCounter" style="position:fixed;left:12px;bottom:12px;display:none;z-index:9999;background:#fff;border:2px solid #222;border-radius:999px;padding:6px 10px;font:700 14px/1 Arial,sans-serif;box-shadow:0 4px 8px rgba(0,0,0,.15);">👥 0</div>
 <script>
 "use strict";
 const $=id=>document.getElementById(id);
 const e={game:$("game"),play:$("playButton"),join:$("joinButton"),sound:$("soundButton"),pause:$("pauseButton"),restart:$("restart"),jump:$("jumpButton"),room:$("roomCode"),status:$("status"),message:$("message"),score:$("score"),best:$("best"),lives:$("lives"),combo:$("combo"),level:$("level"),me:$("myPlayer"),other:$("otherPlayer"),rock:$("rock"),coin:$("coin"),gem:$("gem"),power:$("powerup"),flash:$("flash"),toast:$("toast"),messages:$("chatMessages"),form:$("chatForm"),name:$("chatName"),input:$("chatInput")};
 const items=[e.coin,e.gem,e.power],KEY="froggyDreamBest";
 const s={room:"",id:crypto.randomUUID?.()||Math.random().toString(36).slice(2),channel:null,jumping:false,otherJumping:false,rockX:850,collectibleX:850,last:0,score:0,lives:3,combo:0,started:false,over:false,paused:false,speed:210,level:1,spawn:2,active:null,shield:false,magnet:false,shieldTimer:0,magnetTimer:0,sound:true,best:Number(localStorage.getItem(KEY)||0),audio:null};
+
 e.best.textContent=s.best;
 const status=t=>e.status.textContent=t,message=t=>e.message.textContent=t;
+
+function generateRoomCode(){
+  const chars="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let code="";
+  for(let i=0;i<6;i++) code += chars[Math.floor(Math.random()*chars.length)];
+  return code;
+}
+
+function assignNewRoomCode(){
+  const code = generateRoomCode();
+  s.room = code;
+  e.room.value = code;
+  status(`New game code: ${code}. Share it with friends to join your game!`);
+}
+
 function hud(){e.score.textContent=s.score;e.lives.textContent=s.lives;e.combo.textContent=`x${s.combo}`;e.level.textContent=s.level;e.best.textContent=s.best}
 function beep(f=440,d=.08,type="sine"){if(!s.sound)return;try{const A=AudioContext||webkitAudioContext;s.audio??=new A;s.audio.resume?.();const o=s.audio.createOscillator(),g=s.audio.createGain(),n=s.audio.currentTime;o.type=type;o.frequency.value=f;g.gain.setValueAtTime(.04,n);g.gain.exponentialRampToValueAtTime(.001,n+d);o.connect(g);g.connect(s.audio.destination);o.start(n);o.stop(n+d)}catch{}}
 function toast(t){e.toast.textContent=t;e.toast.classList.remove("show");void e.toast.offsetWidth;e.toast.classList.add("show")}
@@ -141,7 +156,10 @@ function chat(name,text){const d=document.createElement("div"),b=document.create
 function send(data){s.channel?.postMessage({...data,id:s.id})}
 function sendChat(){const n=e.name.value.trim().slice(0,20)||"Anonymous Frog",t=e.input.value.trim().slice(0,180);if(!t)return;chat(n,t);send({type:"chat",name:n,text:t});e.input.value="";e.input.focus();beep(760)}
 function receive(x){const d=x.data;if(!d||d.id===s.id)return;if(d.type==="position")e.other.style.left=(Number(d.position)||90)+"px";if(d.type==="jump")otherJump();if(d.type==="chat")chat(d.name||"Anonymous Frog",d.text||"");if(d.type==="hello")send({type:"position",position:parseFloat(e.me.style.left)||90})}
-function join(){const r=e.room.value.trim().replace(/\s+/g,"-").toLowerCase();if(!r){status("Please enter a room code first, superstar frog.");e.room.focus();return}s.room=r;s.channel?.close();if("BroadcastChannel"in window){s.channel=new BroadcastChannel("froggy-dream-room-"+r);s.channel.onmessage=receive;send({type:"hello"});status(`Joined room: ${r} | Your frog squad is ready to hop!`)}else status("Multiplayer is unavailable here, but solo frog chaos is ready!");e.other.style.display="block";start();chat("Froggy Bot",`You joined room ${r}. Let the hopping begin!`);beep(660,.12)}
+function join(){const r=e.room.value.trim().replace(/\s+/g,"-").toLowerCase();if(!r){
+  assignNewRoomCode();
+  return;
+}s.room=r;s.channel?.close();if("BroadcastChannel"in window){s.channel=new BroadcastChannel("froggy-dream-room-"+r);s.channel.onmessage=receive;send({type:"hello"});status(`Joined room: ${r} | Your frog squad is ready to hop!`)}else status("Multiplayer is unavailable here, but solo frog chaos is ready!");e.other.style.display="block";start();chat("Froggy Bot",`You joined room ${r}. Let the hopping begin!`);beep(660,.12)}
 function start(){if(s.started)return;s.started=true;e.play.style.display="none";e.pause.style.display="inline-block";message("Ribbit! The adventure begins. Dodge rocks, grab treasure, and chase the high score!");status(s.room?`Playing with the frog squad in room: ${s.room}`:"Solo frog adventure in progress!");toast("🐸 LET'S HOP!");beep(520,.15)}
 function jump(){if(!s.started)start();if(s.jumping||s.over||s.paused)return;s.jumping=true;e.me.style.bottom="190px";send({type:"jump"});beep(520,.1,"triangle");setTimeout(()=>{e.me.style.bottom="42px";s.jumping=false},560)}
 function otherJump(){if(s.otherJumping)return;s.otherJumping=true;e.other.style.bottom="190px";setTimeout(()=>{e.other.style.bottom="42px";s.otherJumping=false},560)}
@@ -166,25 +184,7 @@ e.game.onpointerdown=x=>{if(x.target===e.game||x.target.classList.contains("lily
 addEventListener("resize",()=>{if(s.rockX>e.game.clientWidth)s.rockX=e.game.clientWidth+50});
 addEventListener("pagehide",()=>s.channel?.close());
 
-const ownerMode = new URLSearchParams(window.location.search).get('owner') === '1';
-const ownerCounter = document.getElementById('ownerCounter');
-
-async function updateOwnerCounter() {
-  if (!ownerMode) return;
-
-  try {
-    const response = await fetch('https://api.countapi.xyz/hit/froggy-game/visits');
-    const data = await response.json();
-    ownerCounter.style.display = 'block';
-    ownerCounter.textContent = `👥 ${data.value}`;
-  } catch (error) {
-    ownerCounter.style.display = 'block';
-    ownerCounter.textContent = '👥 0';
-  }
-}
-
-updateOwnerCounter();
-
+assignNewRoomCode();
 hud();requestAnimationFrame(loop);
 </script>
 </body>
