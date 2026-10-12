@@ -69,6 +69,15 @@ input{font-size:18px;padding:10px;width:min(230px,70vw);border:2px solid var(--i
 .chatMessage strong{color:#145b78}
 #chatForm{display:flex;gap:8px;margin-top:10px}
 #chatName{width:130px}#chatInput{flex:1;width:auto}#chatForm button{margin:0}
+.codeBox{margin:12px auto;padding:16px;background:#fff36b;border:3px dashed var(--ink);border-radius:14px;font-size:16px;font-weight:bold}
+.codeBox h3{margin:0 0 8px;color:var(--ink);font-size:18px}
+.codeDisplay{font-size:24px;font-family:monospace;letter-spacing:3px;color:#d94b00;background:#ffffffee;padding:10px;border-radius:8px;border:2px solid var(--ink);margin:8px 0}
+.copyButton{font-size:14px;padding:8px 16px;background:#4b7bec;color:#fff;margin-top:8px}
+.copyButton:hover{background:#3a5fc4}
+#gameCodeInput{display:none}
+#verifyCodeBtn{display:none}
+.codeInputSection{display:none;margin:12px auto;padding:16px;background:#e8f8ff;border:3px solid var(--ink);border-radius:14px}
+.codeInputSection.show{display:block}
 @media(max-width:560px){#game{height:350px}.player{transform:scale(.88);transform-origin:bottom left}#rock{font-size:44px}.collectible{font-size:29px}.lily{font-size:31px}#chatForm{flex-wrap:wrap}#chatName,#chatInput,#chatForm button{width:100%}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}}
 </style>
@@ -81,6 +90,20 @@ input{font-size:18px;padding:10px;width:min(230px,70vw);border:2px solid var(--i
 </header>
 <main>
 <section id="menu" aria-label="Game menu">
+<div id="generatedCodeBox" class="codeBox" style="display:none">
+<h3>🔑 Your Game Code:</h3>
+<div class="codeDisplay" id="generatedCode"></div>
+<p style="margin:8px 0;font-size:14px">Share this code with your friends so they can join your game!</p>
+<button class="copyButton" onclick="copyCode()">📋 Copy Code</button>
+</div>
+
+<div class="codeInputSection" id="codeInputSection">
+<h3>🔐 Enter Game Code:</h3>
+<input id="gameCodeInput" maxlength="10" placeholder="Enter code here" autocomplete="off" aria-label="Game code">
+<button id="verifyCodeBtn" type="button">✅ Verify Code</button>
+<p id="codeStatus" style="font-size:14px;margin:8px 0 0;color:#d94b00;font-weight:bold;min-height:18px;"></p>
+</div>
+
 <input id="roomCode" maxlength="24" placeholder="Enter room code" autocomplete="off" aria-label="Room code">
 <button id="joinButton" type="button">🐸 Join Frog Squad</button>
 <button id="soundButton" type="button">🔊 Sound On</button>
@@ -124,15 +147,27 @@ input{font-size:18px;padding:10px;width:min(230px,70vw);border:2px solid var(--i
 </main>
 <div id="flash" aria-hidden="true"></div>
 <div id="toast" role="status" aria-live="polite"></div>
-<div id="ownerCounter" style="position:fixed;left:12px;bottom:12px;display:none;z-index:9999;background:#fff;border:2px solid #222;border-radius:999px;padding:6px 10px;font:700 14px/1 Arial,sans-serif;box-shadow:0 4px 8px rgba(0,0,0,.15);">👥 0</div>
 <script>
 "use strict";
 const $=id=>document.getElementById(id);
-const e={game:$("game"),play:$("playButton"),join:$("joinButton"),sound:$("soundButton"),pause:$("pauseButton"),restart:$("restart"),jump:$("jumpButton"),room:$("roomCode"),status:$("status"),message:$("message"),score:$("score"),best:$("best"),lives:$("lives"),combo:$("combo"),level:$("level"),me:$("myPlayer"),other:$("otherPlayer"),rock:$("rock"),coin:$("coin"),gem:$("gem"),power:$("powerup"),flash:$("flash"),toast:$("toast"),messages:$("chatMessages"),form:$("chatForm"),name:$("chatName"),input:$("chatInput")};
+const e={game:$("game"),play:$("playButton"),join:$("joinButton"),sound:$("soundButton"),pause:$("pauseButton"),restart:$("restart"),jump:$("jumpButton"),room:$("roomCode"),status:$("status"),message:$("message"),score:$("score"),best:$("best"),lives:$("lives"),combo:$("combo"),level:$("level"),me:$("myPlayer"),other:$("otherPlayer"),rock:$("rock"),coin:$("coin"),gem:$("gem"),power:$("powerup"),flash:$("flash"),toast:$("toast"),messages:$("chatMessages"),form:$("chatForm"),name:$("chatName"),input:$("chatInput"),codeBox:$("generatedCodeBox"),codeDisplay:$("generatedCode"),codeInputSection:$("codeInputSection"),gameCodeInput:$("gameCodeInput"),verifyCodeBtn:$("verifyCodeBtn"),codeStatus:$("codeStatus")};
 const items=[e.coin,e.gem,e.power],KEY="froggyDreamBest";
-const s={room:"",id:crypto.randomUUID?.()||Math.random().toString(36).slice(2),channel:null,jumping:false,otherJumping:false,rockX:850,collectibleX:850,last:0,score:0,lives:3,combo:0,started:false,over:false,paused:false,speed:210,level:1,spawn:2,active:null,shield:false,magnet:false,shieldTimer:0,magnetTimer:0,sound:true,best:Number(localStorage.getItem(KEY)||0),audio:null};
+const s={room:"",id:crypto.randomUUID?.()||Math.random().toString(36).slice(2),channel:null,jumping:false,otherJumping:false,rockX:850,collectibleX:850,last:0,score:0,lives:3,combo:0,started:false,over:false,paused:false,speed:210,level:1,spawn:2,active:null,shield:false,magnet:false,shieldTimer:0,magnetTimer:0,sound:true,best:Number(localStorage.getItem(KEY)||0),audio:null,gameCode:"",codeVerified:false};
 e.best.textContent=s.best;
 const status=t=>e.status.textContent=t,message=t=>e.message.textContent=t;
+
+// Generate a unique game code when page loads
+function generateGameCode(){const chars="ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";let code="";for(let i=0;i<6;i++)code+=chars.charAt(Math.floor(Math.random()*chars.length));s.gameCode=code;e.codeDisplay.textContent=code;e.codeBox.style.display="block"}
+
+// Copy code to clipboard
+function copyCode(){const code=s.gameCode;navigator.clipboard.writeText(code).then(()=>{toast("📋 Code copied!");beep(700,.1)}).catch(()=>{alert("Code: "+code)})}
+
+// Check if user has a code from URL
+function checkURLCode(){const params=new URLSearchParams(window.location.search);const urlCode=params.get("code");if(urlCode){e.codeInputSection.classList.add("show");e.gameCodeInput.value=urlCode;e.codeBox.style.display="none"}}
+
+// Verify entered code
+function verifyCode(){const enteredCode=e.gameCodeInput.value.trim().toUpperCase();if(!enteredCode){e.codeStatus.textContent="❌ Please enter a code";beep(200,.1);return}if(enteredCode===s.gameCode){s.codeVerified=true;e.codeInputSection.style.display="none";e.gameCodeInput.disabled=true;e.verifyCodeBtn.disabled=true;e.codeStatus.textContent="";e.status.textContent="✅ Code verified! You're in the game squad!";toast("🔓 CODE ACCEPTED!");beep(880,.2);start()}else{e.codeStatus.textContent="❌ Wrong code! Try again.";beep(200,.15);toast("🐸 WRONG CODE!");e.gameCodeInput.value=""}}
+
 function hud(){e.score.textContent=s.score;e.lives.textContent=s.lives;e.combo.textContent=`x${s.combo}`;e.level.textContent=s.level;e.best.textContent=s.best}
 function beep(f=440,d=.08,type="sine"){if(!s.sound)return;try{const A=AudioContext||webkitAudioContext;s.audio??=new A;s.audio.resume?.();const o=s.audio.createOscillator(),g=s.audio.createGain(),n=s.audio.currentTime;o.type=type;o.frequency.value=f;g.gain.setValueAtTime(.04,n);g.gain.exponentialRampToValueAtTime(.001,n+d);o.connect(g);g.connect(s.audio.destination);o.start(n);o.stop(n+d)}catch{}}
 function toast(t){e.toast.textContent=t;e.toast.classList.remove("show");void e.toast.offsetWidth;e.toast.classList.add("show")}
@@ -160,31 +195,14 @@ function loop(t){if(!s.last)s.last=t;const d=Math.min((t-s.last)/1000,.05);s.las
 function restart(){Object.assign(s,{score:0,lives:3,combo:0,level:1,speed:210,rockX:e.game.clientWidth+50,over:false,paused:false,jumping:false,started:true,shield:false,magnet:false,shieldTimer:0,magnetTimer:0,spawn:1.5});e.play.style.display="none";e.restart.style.display="none";e.pause.style.display="inline-block";e.pause.textContent="⏸ Pause";e.me.style.bottom="42px";e.me.classList.remove("shield","magnet");hide();hud();message("Fresh frog, fresh start! Show those rocks who's boss!");toast("🐸 ROUND TWO!");beep(520,.15)}
 function pause(){if(!s.started||s.over)return;s.paused=!s.paused;e.pause.textContent=s.paused?"▶ Resume":"⏸ Pause";message(s.paused?"Frog break! Stretch those webbed toes.":"Back to the pond—let's hop!")}
 e.play.onclick=start;e.join.onclick=join;e.jump.onclick=jump;e.restart.onclick=restart;e.pause.onclick=pause;e.sound.onclick=()=>{s.sound=!s.sound;e.sound.textContent=s.sound?"🔊 Sound On":"🔇 Sound Off";if(s.sound)beep(700)};
+e.verifyCodeBtn.onclick=verifyCode;
+e.gameCodeInput.onkeydown=x=>{if(x.key==="Enter"){x.preventDefault();verifyCode()}};
 e.form.onsubmit=x=>{x.preventDefault();sendChat()};e.room.onkeydown=x=>{if(x.key==="Enter"){x.preventDefault();join()}};
 document.onkeydown=x=>{if(x.code==="Space"||x.code==="ArrowUp"){x.preventDefault();jump()}if(x.code==="KeyP")pause()};
 e.game.onpointerdown=x=>{if(x.target===e.game||x.target.classList.contains("lily")||x.target.classList.contains("cloud"))jump()};
 addEventListener("resize",()=>{if(s.rockX>e.game.clientWidth)s.rockX=e.game.clientWidth+50});
 addEventListener("pagehide",()=>s.channel?.close());
-
-const ownerMode = new URLSearchParams(window.location.search).get('owner') === '1';
-const ownerCounter = document.getElementById('ownerCounter');
-
-async function updateOwnerCounter() {
-  if (!ownerMode) return;
-
-  try {
-    const response = await fetch('https://api.countapi.xyz/hit/froggy-game/visits');
-    const data = await response.json();
-    ownerCounter.style.display = 'block';
-    ownerCounter.textContent = `👥 ${data.value}`;
-  } catch (error) {
-    ownerCounter.style.display = 'block';
-    ownerCounter.textContent = '👥 0';
-  }
-}
-
-updateOwnerCounter();
-hud();requestAnimationFrame(loop);
+hud();generateGameCode();checkURLCode();requestAnimationFrame(loop);
 </script>
 </body>
-</html>
+</html>  
