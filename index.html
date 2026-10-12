@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -52,7 +51,8 @@ input{font-size:18px;padding:10px;width:min(230px,70vw);border:2px solid var(--i
 .player span:after{right:12px}
 #myPlayer{background:#ff8b35;animation:happy 1.2s ease-in-out infinite}
 @keyframes happy{50%{transform:rotate(2deg) scale(1.03)}}
-#otherPlayer{left:170px;background:#4b7bec;display:none;opacity:.9}
+#otherPlayer{display:none}
+.remote-player{z-index:8;animation:happy 1.2s ease-in-out infinite}
 #myPlayer.shield{outline:5px solid #7df9ff;box-shadow:0 0 22px #7df9ff}
 #myPlayer.magnet{outline:5px solid #ff6fae;box-shadow:0 0 22px #ff6fae}
 #rock{left:850px;bottom:var(--ground);font-size:52px;z-index:7;filter:drop-shadow(0 5px 2px #0004)}
@@ -83,10 +83,7 @@ input{font-size:18px;padding:10px;width:min(230px,70vw);border:2px solid var(--i
 .codeDisplay{font-size:24px;font-family:monospace;letter-spacing:3px;color:#d94b00;background:#ffffffee;padding:10px;border-radius:8px;border:2px solid var(--ink);margin:8px 0}
 .copyButton{font-size:14px;padding:8px 16px;background:#4b7bec;color:#fff;margin-top:8px}
 .copyButton:hover{background:#3a5fc4}
-#gameCodeInput{display:none}
-#verifyCodeBtn{display:none}
-.codeInputSection{display:none;margin:12px auto;padding:16px;background:#e8f8ff;border:3px solid var(--ink);border-radius:14px}
-.codeInputSection.show{display:block}
+.codeInputSection{margin:12px auto;padding:16px;background:#e8f8ff;border:3px solid var(--ink);border-radius:14px}
 @media(max-width:560px){#game{height:350px}.player{transform:scale(.88);transform-origin:bottom left}#rock{font-size:44px}.collectible{font-size:29px}.lily{font-size:31px}#chatForm{flex-wrap:wrap}#chatName,#chatInput,#chatForm button{width:100%}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}}
 </style>
@@ -95,7 +92,7 @@ input{font-size:18px;padding:10px;width:min(230px,70vw);border:2px solid var(--i
 <body>
 <header>
 <h1>🐸 Froggy Game: Jump Into the Fun!</h1>
-<p class="subtitle">Hop, dodge, collect treasure, build ridiculous combos, and become the pond's most legendary frog!</p>
+<p class="subtitle">Hop, dodge rocks, collect treasure, build ridiculous combos, and become the pond's most legendary frog!</p>
 <button id="playButton" type="button">▶️ START THE FROG-TASTIC FUN!</button>
 </header>
 
@@ -104,13 +101,13 @@ input{font-size:18px;padding:10px;width:min(230px,70vw);border:2px solid var(--i
 <div id="generatedCodeBox" class="codeBox">
 <h3>🔑 Your Game Code:</h3>
 <div class="codeDisplay" id="generatedCode">Connecting...</div>
-<p style="margin:8px 0;font-size:14px">Keep this page open and share this code with your friend!</p>
+<p style="margin:8px 0;font-size:14px">Keep this page open and share this code with your friends!</p>
 <button class="copyButton" id="copyCodeButton" type="button">📋 Copy Code</button>
 </div>
 
-<div class="codeInputSection show" id="codeInputSection">
+<div class="codeInputSection" id="codeInputSection">
 <h3>🐸 Join a Friend's Pond</h3>
-<input id="gameCodeInput" maxlength="10" placeholder="Enter friend's code" autocomplete="off" aria-label="Friend's game code" style="display:inline-block">
+<input id="gameCodeInput" maxlength="10" placeholder="Enter host's code" autocomplete="off" aria-label="Host's game code" style="display:inline-block">
 <button id="verifyCodeBtn" type="button" style="display:inline-block">🔗 Connect</button>
 <p id="codeStatus" style="font-size:14px;margin:8px 0 0;color:#d94b00;font-weight:bold;min-height:18px"></p>
 </div>
@@ -164,7 +161,6 @@ input{font-size:18px;padding:10px;width:min(230px,70vw);border:2px solid var(--i
 <div id="flash" aria-hidden="true"></div>
 <div id="toast" role="status" aria-live="polite"></div>
 
-<!-- PeerJS provides the internet connection between phones. -->
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 
 <script>
@@ -181,26 +177,28 @@ const e={
  coin:$("coin"),gem:$("gem"),power:$("powerup"),
  flash:$("flash"),toast:$("toast"),messages:$("chatMessages"),
  form:$("chatForm"),name:$("chatName"),input:$("chatInput"),
- codeBox:$("generatedCodeBox"),codeDisplay:$("generatedCode"),
- codeInputSection:$("codeInputSection"),gameCodeInput:$("gameCodeInput"),
+ codeDisplay:$("generatedCode"),gameCodeInput:$("gameCodeInput"),
  verifyCodeBtn:$("verifyCodeBtn"),codeStatus:$("codeStatus")
 };
 
 const KEY="froggyDreamBest";
 const s={
  id:Math.random().toString(36).slice(2),
- peer:null,connection:null,room:"",
- jumping:false,otherJumping:false,
- rockX:850,collectibleX:850,last:0,score:0,lives:3,
- combo:0,started:false,over:false,paused:false,
- speed:210,level:1,spawn:2,active:null,
+ peer:null,hostConnection:null,connections:new Map(),
+ remotePlayers:new Map(),slotByPeer:new Map(),
+ isHost:true,gameCode:"",connected:false,
+ jumping:false,rockX:850,collectibleX:850,last:0,
+ score:0,lives:3,combo:0,started:false,over:false,
+ paused:false,speed:210,level:1,spawn:2,active:null,
  shield:false,magnet:false,shieldTimer:0,magnetTimer:0,
  sound:true,best:Number(localStorage.getItem(KEY)||0),
- audio:null,gameCode:"",connected:false,lastPositionSent:0
+ audio:null,lastPositionSent:0
 };
 
+const colors=["#4b7bec","#9b59b6","#20a878"];
 const items=[e.coin,e.gem,e.power];
 e.best.textContent=s.best;
+e.other.style.display="none";
 
 function status(t){e.status.textContent=t}
 function message(t){e.message.textContent=t}
@@ -210,6 +208,17 @@ function makeCode(){
  let c="";
  for(let i=0;i<6;i++)c+=chars[Math.floor(Math.random()*chars.length)];
  return c;
+}
+
+function slotPosition(slot){
+ const fractions=[.10,.30,.50,.70];
+ return Math.round(Math.max(0,e.game.clientWidth-48)*(fractions[slot]||.70));
+}
+
+function myPositionRatio(){
+ const max=Math.max(1,e.game.clientWidth-48);
+ const left=parseFloat(e.me.style.left);
+ return Math.max(0,Math.min(1,(Number.isFinite(left)?left:slotPosition(0))/max));
 }
 
 function toast(t){
@@ -253,99 +262,197 @@ function chat(name,text){
  e.messages.scrollTop=e.messages.scrollHeight;
 }
 
-/* Every message is sent over the online PeerJS connection. */
+/* Send to every player when hosting, or to the host when joining. */
 function send(data){
- if(s.connection&&s.connection.open){
-  try{s.connection.send({...data,id:s.id})}catch(err){
-   console.warn("Could not send game data",err);
+ const packet={...data,id:s.id};
+ if(s.isHost){
+  for(const conn of s.connections.values()){
+   if(conn.open){
+    try{conn.send(packet)}catch(err){console.warn(err)}
+   }
+  }
+ }else if(s.hostConnection&&s.hostConnection.open){
+  try{s.hostConnection.send(packet)}catch(err){console.warn(err)}
+ }
+}
+
+function relayToOthers(data,except){
+ for(const conn of s.connections.values()){
+  if(conn!==except&&conn.open){
+   try{conn.send(data)}catch(err){console.warn(err)}
   }
  }
 }
 
-function handleData(d){
+function getRemote(id){
+ if(!id||id===s.id)return null;
+ if(s.remotePlayers.has(id))return s.remotePlayers.get(id);
+
+ const frog=document.createElement("div");
+ frog.className="player remote-player";
+ frog.setAttribute("aria-label","Other player's frog");
+ frog.style.background=colors[s.remotePlayers.size%colors.length];
+ frog.style.left=slotPosition(Math.min(3,s.remotePlayers.size+1))+"px";
+ frog.style.bottom="42px";
+ frog.style.display="block";
+ const eyes=document.createElement("span");
+ frog.appendChild(eyes);
+ e.game.appendChild(frog);
+ s.remotePlayers.set(id,frog);
+ return frog;
+}
+
+function removeRemote(id){
+ const frog=s.remotePlayers.get(id);
+ if(frog)frog.remove();
+ s.remotePlayers.delete(id);
+}
+
+function remoteJump(id){
+ const frog=getRemote(id);
+ if(!frog||frog.dataset.jumping==="yes")return;
+ frog.dataset.jumping="yes";
+ frog.style.bottom="190px";
+ setTimeout(()=>{
+  if(frog.isConnected){
+   frog.style.bottom="42px";
+   frog.dataset.jumping="no";
+  }
+ },560);
+}
+
+function handleData(d,conn){
  if(!d||d.id===s.id)return;
 
- if(d.type==="position"){
-  const x=Number(d.position);
-  if(Number.isFinite(x)){
-   e.other.style.left=Math.max(0,Math.min(e.game.clientWidth-48,x))+"px";
-  }
-  if(typeof d.jumping==="boolean"&&d.jumping&&!s.otherJumping)otherJump();
+ if(conn&&s.isHost&&d.id){
+  conn.playerId=d.id;
  }
 
- if(d.type==="jump")otherJump();
-
- if(d.type==="chat")chat(d.name||"Anonymous Frog",d.text||"");
+ if(d.type==="assign"){
+  s.isHost=false;
+  const slot=Math.max(1,Math.min(3,Number(d.slot)||1));
+  e.me.style.left=slotPosition(slot)+"px";
+  e.codeStatus.textContent="Joining the host's pond...";
+  return;
+ }
 
  if(d.type==="hello"){
-  send({
-   type:"position",
-   position:parseFloat(e.me.style.left)||90,
-   jumping:s.jumping
-  });
+  if(s.isHost&&conn&&conn.open){
+   try{
+    conn.send({
+     type:"position",id:s.id,
+     position:myPositionRatio(),jumping:s.jumping
+    });
+   }catch{}
+  }
+  return;
+ }
+
+ if(d.type==="position"){
+  const frog=getRemote(d.id);
+  if(frog&&Number.isFinite(Number(d.position))){
+   const ratio=Math.max(0,Math.min(1,Number(d.position)));
+   frog.style.left=Math.round(ratio*Math.max(0,e.game.clientWidth-48))+"px";
+  }
+  if(d.jumping)remoteJump(d.id);
+ }
+
+ if(d.type==="jump")remoteJump(d.id);
+
+ if(d.type==="chat")chat(d.name||"Anonymous Frog",d.text||"");
+}
+
+function updateConnectionStatus(){
+ const count=s.isHost?s.connections.size:(s.connected?1:0);
+ if(s.isHost){
+  s.connected=count>0;
+  status(count===0
+   ?"🟢 Your pond is ready! Share your code with up to 3 friends."
+   :"🟢 "+(count+1)+" of 4 players connected!");
+ }else if(s.connected){
+  status("🟢 Connected to the host's pond!");
  }
 }
 
-function attachConnection(conn){
- if(s.connection&&s.connection!==conn){
-  try{s.connection.close()}catch{}
+function attachHostConnection(conn){
+ if(!s.isHost){
+  try{conn.close()}catch{}
+  return;
  }
- s.connection=conn;
+
+ if(s.connections.size>=3){
+  try{conn.close()}catch{}
+  status("🐸 This pond is full! It can hold 4 players.");
+  return;
+ }
+
+ const used=[0,...s.slotByPeer.values()];
+ let slot=[1,2,3].find(n=>!used.includes(n));
+ if(!slot){
+  try{conn.close()}catch{}
+  return;
+ }
+
+ s.connections.set(conn.peer,conn);
+ s.slotByPeer.set(conn.peer,slot);
+ conn.playerSlot=slot;
 
  conn.on("open",()=>{
-  s.connected=true;
-  e.other.style.display="block";
-  e.codeStatus.textContent="✅ Connected! Your friend's blue frog should appear.";
-  status("🟢 Connected to your frog friend!");
-  toast("🐸 FROG FRIEND CONNECTED!");
-  send({type:"hello"});
-  send({type:"position",position:parseFloat(e.me.style.left)||90,jumping:s.jumping});
-  chat("Froggy Bot","Your frog friend connected to the pond!");
-  beep(800,.15);
+  if(s.connections.get(conn.peer)!==conn)return;
+  try{
+   conn.send({type:"assign",id:s.id,slot});
+   conn.send({
+    type:"position",id:s.id,
+    position:myPositionRatio(),jumping:s.jumping
+   });
+  }catch{}
+  updateConnectionStatus();
+  toast("🐸 PLAYER JOINED!");
+  chat("Froggy Bot","A frog friend joined the pond!");
+  beep(800,.12);
  });
 
- conn.on("data",handleData);
+ conn.on("data",d=>{
+  if(!d)return;
+  if(d.type!=="hello"&&d.type!=="assign"){
+   relayToOthers(d,conn);
+  }
+  handleData(d,conn);
+ });
 
  conn.on("close",()=>{
-  if(s.connection===conn){
-   s.connected=false;
-   e.other.style.display="none";
-   status("Your friend's connection closed. You can try connecting again.");
-   e.codeStatus.textContent="Connection closed. Try entering the code again.";
-  }
+  s.connections.delete(conn.peer);
+  s.slotByPeer.delete(conn.peer);
+  if(conn.playerId)removeRemote(conn.playerId);
+  updateConnectionStatus();
+  chat("Froggy Bot","A player left the pond.");
  });
 
- conn.on("error",err=>{
-  console.warn("Connection error",err);
-  e.codeStatus.textContent="Connection error. Check the code and internet, then try again.";
- });
+ conn.on("error",err=>console.warn("Player connection error",err));
 }
 
 function createOnlineRoom(){
  if(typeof Peer==="undefined"){
-  status("Online connection library didn't load. Check your internet and reload the game.");
+  status("Online connection library didn't load. Check your internet and reload.");
   e.codeDisplay.textContent="OFFLINE";
   return;
  }
 
  s.gameCode=makeCode();
  e.codeDisplay.textContent=s.gameCode;
-
  s.peer=new Peer("froggy-"+s.gameCode.toLowerCase());
 
- s.peer.on("open",id=>{
+ s.peer.on("open",()=>{
   e.codeDisplay.textContent=s.gameCode;
-  status("🟢 Your pond is ready! Share your code with your friend.");
+  status("🟢 Your pond is ready! Share your code with up to 3 friends.");
  });
 
- s.peer.on("connection",conn=>{
-  attachConnection(conn);
- });
+ s.peer.on("connection",conn=>attachHostConnection(conn));
 
  s.peer.on("error",err=>{
   console.warn("Peer service error",err);
   if(err.type==="unavailable-id"){
-   status("That room code was already in use. Reload the game to get another code.");
+   status("That room code is already in use. Reload to get another code.");
   }else if(err.type==="network"||err.type==="server-error"){
    status("Online connection problem. Check your internet and try again.");
   }else{
@@ -364,37 +471,62 @@ function createOnlineRoom(){
 function connectToFriend(){
  const code=e.gameCodeInput.value.trim().toUpperCase().replace(/[^A-Z0-9]/g,"");
  if(code.length<4){
-  e.codeStatus.textContent="❌ Enter your friend's game code first.";
+  e.codeStatus.textContent="❌ Enter the host's game code first.";
   return;
  }
  if(!s.peer||s.peer.destroyed){
-  e.codeStatus.textContent="Online connection isn't ready yet. Wait a moment and try again.";
+  e.codeStatus.textContent="Online connection isn't ready yet. Wait and try again.";
   return;
  }
  if(code===s.gameCode){
-  e.codeStatus.textContent="That's your own code! Enter the code shown on your friend's phone.";
+  e.codeStatus.textContent="That's your own code! Enter the host's code.";
+  return;
+ }
+ if(s.connected){
+  e.codeStatus.textContent="You're already connected to a pond.";
   return;
  }
 
  e.verifyCodeBtn.disabled=true;
- e.codeStatus.textContent="Connecting to your friend's pond...";
+ e.codeStatus.textContent="Connecting to the host...";
  status("Connecting to frog code "+code+"...");
 
  try{
-  const conn=s.peer.connect("froggy-"+code.toLowerCase(),{
-   reliable:true
-  });
-  attachConnection(conn);
-  conn.on("error",()=>{
-   e.codeStatus.textContent="Could not connect. Check your friend's code and make sure their game is open.";
+  const conn=s.peer.connect("froggy-"+code.toLowerCase(),{reliable:true});
+  s.isHost=false;
+  s.hostConnection=conn;
+
+  conn.on("open",()=>{
+   s.connected=true;
+   e.codeStatus.textContent="✅ Connected! Waiting for your frog's place in the pond.";
+   conn.send({type:"hello",id:s.id});
+   conn.send({type:"position",id:s.id,position:myPositionRatio(),jumping:s.jumping});
+   status("🟢 Connected to the host's pond!");
+   toast("🐸 FROG FRIEND CONNECTED!");
+   chat("Froggy Bot","You joined the pond!");
+   beep(800,.15);
    e.verifyCodeBtn.disabled=false;
   });
+
+  conn.on("data",d=>handleData(d,conn));
+
   conn.on("close",()=>{
+   s.connected=false;
+   s.hostConnection=null;
+   for(const id of [...s.remotePlayers.keys()])removeRemote(id);
+   e.codeStatus.textContent="Connection closed. Check with the host and try again.";
+   e.verifyCodeBtn.disabled=false;
+   status("Disconnected from the pond.");
+  });
+
+  conn.on("error",err=>{
+   console.warn(err);
+   e.codeStatus.textContent="Could not connect. Check the code and internet.";
    e.verifyCodeBtn.disabled=false;
   });
  }catch(err){
   console.warn(err);
-  e.codeStatus.textContent="Could not connect. Please check the code and try again.";
+  e.codeStatus.textContent="Could not connect. Check the code and try again.";
   e.verifyCodeBtn.disabled=false;
  }
 }
@@ -425,7 +557,7 @@ function start(){
  e.play.style.display="none";
  e.pause.style.display="inline-block";
  message("Ribbit! Dodge rocks, grab treasure, and chase the high score!");
- status(s.connected?"🟢 Playing with your frog friend!":"Solo frog adventure. Share your code to invite a friend!");
+ status(s.connected?"🟢 Playing with your frog friends!":"Solo frog adventure. Share your code to invite friends!");
  toast("🐸 LET'S HOP!");
  beep(520,.15);
 }
@@ -440,16 +572,6 @@ function jump(){
  setTimeout(()=>{
   e.me.style.bottom="42px";
   s.jumping=false;
- },560);
-}
-
-function otherJump(){
- if(s.otherJumping)return;
- s.otherJumping=true;
- e.other.style.bottom="190px";
- setTimeout(()=>{
-  e.other.style.bottom="42px";
-  s.otherJumping=false;
  },560);
 }
 
@@ -593,14 +715,11 @@ function loop(t){
   document.body.classList.toggle("night",Math.floor(s.score/40)%2===1);
  }
 
- /* Send frog position regularly so the other phone can see updates. */
- if(s.connected&&t-s.lastPositionSent>100){
-  s.lastPositionSent=t;
-  send({
-   type:"position",
-   position:parseFloat(e.me.style.left)||90,
-   jumping:s.jumping
-  });
+ if((s.isHost&&s.connections.size>0)||(!s.isHost&&s.connected)){
+  if(t-s.lastPositionSent>100){
+   s.lastPositionSent=t;
+   send({type:"position",position:myPositionRatio(),jumping:s.jumping});
+  }
  }
 
  requestAnimationFrame(loop);
@@ -635,16 +754,15 @@ function pause(){
 function joinRoom(){
  const r=e.room.value.trim();
  if(!r){
-  status(s.connected?"You're already connected to a friend!":"Enter a room name if you want to label your pond.");
+  status(s.connected?"You're already connected to the pond!":"Enter a room name if you want to label your pond.");
   return;
  }
- s.room=r;
- if(s.connected){
-  status("🟢 Connected to your frog friend! Room: "+r);
- }else{
-  status("Your room label is saved. To connect another phone, enter its game code above.");
+ if(s.isHost&&s.connections.size>=3){
+  status("This pond is full! It can hold 4 players.");
+  return;
  }
- chat("Froggy Bot","Pond label: "+r+". Share your game code to invite a friend!");
+ status(s.connected?"🟢 Connected to the pond! Room: "+r:"Room label saved. Share the game code to invite friends.");
+ chat("Froggy Bot","Pond label: "+r+". Share the host's game code to invite friends!");
 }
 
 function sendChat(){
@@ -703,21 +821,16 @@ e.game.onpointerdown=x=>{
 };
 
 addEventListener("resize",()=>{
+ const ownSlot=s.isHost?0:(s.hostConnection?Number(e.me.dataset.slot||1):0);
+ if(!s.meMoved)e.me.style.left=slotPosition(ownSlot)+"px";
  if(s.rockX>e.game.clientWidth)s.rockX=e.game.clientWidth+50;
-});
-
-addEventListener("pagehide",()=>{
- if(s.connection){
-  try{s.connection.close()}catch{}
- }
- if(s.peer){
-  try{s.peer.destroy()}catch{}
+ for(const frog of s.remotePlayers.values()){
+  const ratio=Number(frog.dataset.position||.5);
+  frog.style.left=Math.round(ratio*Math.max(0,e.game.clientWidth-48))+"px";
  }
 });
 
-hud();
-createOnlineRoom();
-requestAnimationFrame(loop);
+const originalHandleData=handleData;
 </script>
 </body>
 </html>
