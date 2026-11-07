@@ -818,9 +818,6 @@ document.onkeydown=x=>{
  }
  if(x.code==="KeyP")pause();
 };
-e.game.onpointerdown=x=>{
- if(x.target===e.game||x.target.classList.contains("lily")||x.target.classList.contains("cloud"))jump();
-};
 
 addEventListener("resize",()=>{
  const ownSlot=s.isHost?0:(s.hostConnection?Number(e.me.dataset.slot||1):0);
