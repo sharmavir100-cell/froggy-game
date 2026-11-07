@@ -809,13 +809,15 @@ e.room.onkeydown=x=>{
 };
 
 document.onkeydown=x=>{
+ if(x.target instanceof HTMLElement &&
+    (x.target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(x.target.tagName))) return;
+
  if(x.code==="Space"||x.code==="ArrowUp"){
   x.preventDefault();
   jump();
  }
  if(x.code==="KeyP")pause();
 };
-
 e.game.onpointerdown=x=>{
  if(x.target===e.game||x.target.classList.contains("lily")||x.target.classList.contains("cloud"))jump();
 };
